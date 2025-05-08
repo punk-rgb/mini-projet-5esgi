@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo
+  namespace: icgroup
+  labels:
+    app: odoo
+    env: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odoo
+  template:
+    metadata:
+      labels:
+        app: odoo
+        env: prod
+    spec:
+      containers:
+        - name: odoo
+          image: odoo:13.0
+          env:
+            - name: HOST
+              value: "postgres"
+            - name: USER
+              valueFrom: 
+               secretKeyRef:
+                 name: secret
+                 key: ODOO_DB_USER
+            - name: PASSWORD
+              valueFrom: 
+               secretKeyRef:
+                 name: secret
+                 key: ODOO_DB_PASSWORD
+            - name: PORT
+              value: "5432"
+            - name: DATABASE
+              value: "odoodb"
+          ports:
+            - containerPort: 8069
+          volumeMounts:
+            - mountPath: /var/lib/odoo
+              name: odoo-data
+      volumes:
+        - name: odoo-data
+          persistentVolumeClaim:
+            claimName: odoo-pvc
